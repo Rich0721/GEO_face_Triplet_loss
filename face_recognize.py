@@ -5,7 +5,6 @@ import os
 from os.path import join as pjoin
 import sys
 import copy
-import detect_face
 import random
 import facenet
 from scipy import misc
