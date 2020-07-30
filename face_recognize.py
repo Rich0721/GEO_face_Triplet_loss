@@ -9,6 +9,7 @@ import random
 import facenet
 from scipy import misc
 import pyttsx3
+from glob import glob
 
 class faceReconize:
 
@@ -28,58 +29,27 @@ class faceReconize:
      
         self.image_size = 160
     
-    def to_rgb(self, img):
-        w, h = img.shape
-        ret = np.empty((w, h, 3), dtype=np.uint8)
-        ret[:, :, 0] = ret[:, :, 1] = ret[:, :, 2] = img
-        return ret
-    
-    def load_data(self, image_paths):
-        tmp_image_paths = []
-        img_list = []
-        path = pjoin(self.noMask_folder, image_paths)
-        if (os.path.isdir(path)):
-            for item in os.listdir(path):
-                print(item)
-                tmp_image_paths.insert(0, pjoin(path, item))
-        else:
-            tmp_image_paths.append(path)
-        
-        for image in tmp_image_paths:
-            img = cv2.imread(image)
-            img = cv2.resize(img, (self.image_size, self.image_size))
-            prewhitened = facenet.prewhiten(img)
-            img_list.append(prewhitened)
-            self.image_tmp.append(prewhitened)
-        images = np.stack(img_list)
-        return images, len(tmp_image_paths)
     
     def constructModel(self):
         print("loading face datset....")
-
-        for items in os.listdir(self.noMask_folder):
-            emb_data1 = []
-            self.name_tmp.append(items)
-            images_tmp, count = self.load_data(items)
-            for i in range(9):
-                emb_data = self.sess.run(self.embeddings, feed_dict={self.images_placeholder: images_tmp, self.phase_train_placeholder: False})
-                emb_data = emb_data.sum(axis=0)
-                emb_data1.append(emb_data)
-            emb_data1 = np.array(emb_data1)
-            emb_data = emb_data1.sum(axis=0)
-            self.Emb_data.append(np.true_divide(emb_data, 9*count))
+        text_files = glob(os.path.join("textfile", "*.txt"))
+        for t in text_files:
+            print("loading {}".format(t))
+            array = np.loadtxt(t)
+            self.Emb_data.append(array)
+        for f in os.listdir(self.noMask_folder):
+            self.name_tmp.append(f)
     
     def identifyFace(self, face_photo):
 
         dist = []
         face_photo = cv2.resize(face_photo, (self.image_size, self.image_size))
         prewhitened = facenet.prewhiten(face_photo)
-        self.image_tmp.append(prewhitened)
-        image = np.stack(self.image_tmp)
+        prewhitened = np.expand_dims(prewhitened, axis=0)
+        image = np.stack(prewhitened)
 
         emb_data = self.sess.run(self.embeddings, feed_dict={self.images_placeholder: image, self.phase_train_placeholder: False})
-        self.image_tmp.pop()
-        #print(len(self.Emb_data))
+
         for i in range(len(self.Emb_data)):
             dist.append(np.sqrt(np.sum(np.square(np.subtract(emb_data[len(emb_data)-1,:], self.Emb_data[i])))))
         
