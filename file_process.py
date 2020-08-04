@@ -6,6 +6,7 @@ import facenet
 import numpy as np
 import shutil
 import json
+import copy
 
 def load_data(folder='picture', image_paths=None):
 
@@ -17,7 +18,8 @@ def load_data(folder='picture', image_paths=None):
             print(item)
             tmp_image_paths.insert(0, os.path.join(path, item))
     else:
-        tmp_image_paths.append(path)
+        tmp_image_paths=copy.copy(image_paths)
+        #tmp_image_paths.append(path)
     
     for image in tmp_image_paths:
         img = cv2.imread(image)
@@ -37,18 +39,22 @@ def construct_model():
     print("loading datasets......")
     for items in os.listdir("picture"):
         if items != 'finish':
-            emb_data1 = []
             images_temp, count = load_data(image_paths=items)
-            for i in range(9):
-                emb_data = sess.run(embeddings, feed_dict={images_placeholder:images_temp, phase_train_placeholder:False})
-                emb_data = emb_data.sum(axis=0)
-                emb_data1.append(emb_data)
-            emb_data1 = np.array(emb_data1)
-            emb_data = emb_data1.sum(axis=0)
-            emb_data = np.true_divide(emb_data, 9*count)
-            
-            print("Write {} text file.".format(items))
-            np.savetxt(os.path.join("textfile", items+".txt"), emb_data)
+            x = 0
+            for image_temp in images_temp:
+                emb_data1 = []
+                image_temp = np.expand_dims(image_temp, axis=0)
+                for i in range(9):
+                    emb_data = sess.run(embeddings, feed_dict={images_placeholder:image_temp, phase_train_placeholder:False})
+                    emb_data = emb_data.sum(axis=0)
+                    emb_data1.append(emb_data)
+                emb_data1 = np.array(emb_data1)
+                emb_data = emb_data1.sum(axis=0)
+                emb_data = np.true_divide(emb_data, 9)
+                 
+                print("Write {} text file.".format( items + str(x).zfill(2)))
+                np.savetxt(os.path.join("textfile", items + str(x).zfill(2) +".txt"), emb_data)
+                x += 1
             shutil.move(os.path.join("picture", items), os.path.join("picture", "finish"))
         
     sess.close()
