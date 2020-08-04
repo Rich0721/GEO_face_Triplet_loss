@@ -7,9 +7,11 @@ import sys
 import copy
 import random
 import facenet
+import time
 from scipy import misc
 import pyttsx3
 from glob import glob
+from file_process import write_json 
 
 class faceReconize:
 
@@ -37,8 +39,9 @@ class faceReconize:
             print("loading {}".format(t))
             array = np.loadtxt(t)
             self.Emb_data.append(array)
-        for f in os.listdir(self.noMask_folder):
-            self.name_tmp.append(f)
+            name = os.path.split(t)[1]
+            self.name_tmp.append(name[:-4])
+        
     
     def identifyFace(self, face_photo):
 
@@ -84,7 +87,7 @@ def videoCapture(faceClass):
                     ymin = int(det[1])
                     xmax = int(det[0] + det[2])
                     ymax = int(det[1] + det[3])
-
+                    file_name = str(time.time()) + ".json"
                     bb = np.zeros(4, dtype=np.int32)
                     bb[0] = np.maximum(xmin, 0)
                     bb[1] = np.maximum(ymin, 0)
@@ -95,6 +98,8 @@ def videoCapture(faceClass):
                     cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
 
                     name = faceClass.identifyFace(cropped)
+                    data_dict = {'name':name, 'xmin':xmin, 'ymin':ymin, 'xmax':xmax, 'ymax':ymax}
+                    write_json(file_name, data_dict)
                     print(name)
         cv2.imshow('Video', frame)
         cv2.waitKey(1)
