@@ -28,6 +28,7 @@ import json
 from face_recognize import faceReconize
 from flask_cors import CORS
 from collections import Counter
+from MTCNN.mtcnn import MTCNN
 app = Flask(__name__)
 #cv2.ocl.setUseOpenCL(False)
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
@@ -39,6 +40,7 @@ times=0 #每幾張預測結果，去投票出最高的可能 (前端JS可控制�
 
 face = faceReconize()
 face_cascade = cv2.CascadeClassifier('./haarcascade_frontalface_default.xml')
+#detector_mtcnn = MTCNN() # use MTCNN
 global i
 i=0
 c1=Counter()
@@ -49,6 +51,10 @@ def haar_detect_face(frame):
     
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     bounding_boxes = face_cascade.detectMultiScale(gray, 1.3, 5,flags=4)#flags=4檢測最大目標
+    
+    #frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    #bounding_boxes = detector_mtcnn..detect_faces(frame_rgb)
+    
     detect_face_bounding_box={}
     haar_cropped=[]
     if len(bounding_boxes) < 1:
